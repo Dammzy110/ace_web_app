@@ -368,6 +368,19 @@ PAGE = """
                             View live website ↗
                         </a>
                     </article>
+                    <article class="project">
+    <div class="project-icon">🤖</div>
+    <h3>Ace Chatbot</h3>
+    <p>
+        A Python chatbot project built as part of my journey
+        into software development and AI.
+    </p>
+    <a class="project-link"
+       href="https://github.com/Dammzy110/ace-chatbot"
+       target="_blank" rel="noopener noreferrer">
+        View chatbot code ↗
+    </a>
+</article>
 
                     <article class="project">
                         <div class="project-icon">🤖</div>
