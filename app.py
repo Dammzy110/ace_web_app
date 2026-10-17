@@ -1,415 +1,456 @@
-from flask import Flask, request
-import json
-import os
-import html
+from flask import Flask, render_template_string
 
 app = Flask(__name__)
 
-MEMORY_FILE = "visitor_memory.json"
+PAGE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1020">
+    <meta name="description" content="Ace's developer portfolio — Python, software development and AI.">
+    <title>Ace | Developer Portfolio</title>
 
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-def load_name():
-    if os.path.exists(MEMORY_FILE):
-        try:
-            with open(MEMORY_FILE, "r", encoding="utf-8") as file:
-                data = json.load(file)
-                return data.get("name", "")
-        except (json.JSONDecodeError, OSError):
-            return ""
-    return ""
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+        }
 
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b1020;
+            color: #f8fafc;
+            line-height: 1.7;
+        }
 
-def save_name(name):
-    with open(MEMORY_FILE, "w", encoding="utf-8") as file:
-        json.dump({"name": name}, file)
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
 
+        .container {
+            width: min(100% - 36px, 1050px);
+            margin: auto;
+        }
 
-@app.route("/", methods=["GET", "POST"])
-def home():
-    name = load_name()
-    message = ""
+        nav {
+            min-height: 78px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
 
-    if request.method == "POST":
-        new_name = request.form.get("name", "").strip()
+        .logo {
+            font-size: 1.7rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
 
-        if new_name:
-            name = new_name[:50]
-            save_name(name)
-            message = "Your name has been saved successfully!"
-        else:
-            message = "Please enter your name."
+        .logo span, .accent {
+            color: #60a5fa;
+        }
 
-    safe_name = html.escape(name)
-    safe_message = html.escape(message)
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            color: #cbd5e1;
+            font-size: .92rem;
+        }
 
-    greeting = (
-        f"Welcome back, {safe_name}!"
-        if safe_name
-        else "Welcome to my corner of the internet."
-    )
+        .nav-links a:hover {
+            color: #60a5fa;
+        }
 
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#0b1020">
-        <meta name="description"
-              content="Welcome to Ace's personal website, built with Python and Flask.">
+        .hero {
+            padding: 100px 0 90px;
+            background:
+                radial-gradient(ellipse at 15% 20%,
+                    rgba(59,130,246,.17), transparent 42%),
+                radial-gradient(ellipse at 85% 70%,
+                    rgba(139,92,246,.15), transparent 42%);
+        }
 
-        <title>Ace | My Personal Website</title>
+        .tag {
+            display: inline-block;
+            border: 1px solid #334155;
+            background: #111827;
+            color: #93c5fd;
+            padding: 7px 13px;
+            border-radius: 30px;
+            font-size: .85rem;
+            margin-bottom: 25px;
+        }
 
-        <style>
-            * {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
+        h1 {
+            font-size: clamp(2.8rem, 8vw, 5.5rem);
+            line-height: 1.08;
+            letter-spacing: -3px;
+            margin-bottom: 25px;
+        }
 
-            body {
-                font-family: Arial, Helvetica, sans-serif;
-                background: #0b1020;
-                color: #f8fafc;
-                min-height: 100vh;
-                line-height: 1.6;
-            }
+        .gradient {
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
 
-            .background-glow {
-                position: fixed;
-                inset: 0;
-                background:
-                    radial-gradient(
-                        circle at 15% 20%,
-                        rgba(59, 130, 246, 0.18),
-                        transparent 35%
-                    ),
-                    radial-gradient(
-                        circle at 85% 75%,
-                        rgba(139, 92, 246, 0.16),
-                        transparent 35%
-                    );
-                pointer-events: none;
-                z-index: -1;
-            }
+        .hero p {
+            max-width: 620px;
+            color: #aab6ca;
+            font-size: 1.1rem;
+        }
 
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 13px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 13px 19px;
+            border-radius: 10px;
+            font-weight: 700;
+            border: 1px solid #334155;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #3b82f6, #7c3aed);
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            opacity: .9;
+        }
+
+        section {
+            padding: 65px 0;
+        }
+
+        .section-label {
+            color: #60a5fa;
+            font-size: .85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-size: clamp(1.9rem, 5vw, 2.7rem);
+            line-height: 1.2;
+            margin: 10px 0 18px;
+            letter-spacing: -1px;
+        }
+
+        .section-intro {
+            color: #aab6ca;
+            max-width: 650px;
+            margin-bottom: 30px;
+        }
+
+        .about-card, .project, .skill {
+            background: #111827;
+            border: 1px solid #273449;
+            border-radius: 17px;
+        }
+
+        .about-card {
+            padding: 28px;
+        }
+
+        .about-card p {
+            color: #cbd5e1;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .project {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .project-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .project h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .project p {
+            color: #aab6ca;
+            margin-bottom: 18px;
+            flex: 1;
+        }
+
+        .project-link {
+            color: #93c5fd;
+            font-weight: 700;
+        }
+
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .skill {
+            padding: 10px 15px;
+            color: #dbeafe;
+        }
+
+        .contact-card {
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 32px;
+            background: linear-gradient(
+                135deg, rgba(59,130,246,.12),
+                rgba(124,58,237,.12)
+            );
+        }
+
+        footer {
+            border-top: 1px solid #273449;
+            padding: 25px 0;
+            color: #94a3b8;
+            text-align: center;
+            font-size: .9rem;
+        }
+
+        @media (max-width: 650px) {
             .container {
-                width: min(100% - 36px, 1000px);
-                margin: auto;
+                width: min(100% - 28px, 1050px);
             }
 
             nav {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 26px 0;
-                gap: 15px;
+                padding: 18px 0;
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
             }
 
-            .brand {
-                font-size: 1.5rem;
-                font-weight: 800;
-                letter-spacing: -1px;
-            }
-
-            .brand span {
-                color: #60a5fa;
-            }
-
-            .status {
-                color: #cbd5e1;
-                border: 1px solid #334155;
-                border-radius: 50px;
-                padding: 7px 12px;
-                font-size: 0.8rem;
-            }
-
-            .status-dot {
-                display: inline-block;
-                width: 8px;
-                height: 8px;
-                background: #4ade80;
-                border-radius: 50%;
-                margin-right: 6px;
+            .nav-links {
+                gap: 16px;
+                flex-wrap: wrap;
+                font-size: .85rem;
             }
 
             .hero {
-                padding: 65px 0 55px;
-                text-align: center;
-            }
-
-            .eyebrow {
-                display: inline-block;
-                color: #93c5fd;
-                background: rgba(59, 130, 246, 0.12);
-                border: 1px solid rgba(96, 165, 250, 0.3);
-                padding: 7px 14px;
-                border-radius: 50px;
-                font-size: 0.85rem;
-                margin-bottom: 24px;
+                padding: 65px 0;
             }
 
             h1 {
-                font-size: clamp(2.5rem, 8vw, 5rem);
-                line-height: 1.08;
-                letter-spacing: -3px;
-                margin-bottom: 22px;
+                letter-spacing: -1.5px;
             }
 
-            .gradient-text {
-                background: linear-gradient(
-                    90deg, #60a5fa, #a78bfa
-                );
-                -webkit-background-clip: text;
-                background-clip: text;
-                color: transparent;
-            }
-
-            .intro {
-                max-width: 590px;
-                margin: 0 auto;
-                color: #aab6ca;
-                font-size: 1.05rem;
-            }
-
-            .card {
-                max-width: 590px;
-                margin: 0 auto;
-                padding: 32px;
-                background: rgba(17, 24, 39, 0.88);
-                border: 1px solid #273449;
-                border-radius: 22px;
-                box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
-            }
-
-            .card h2 {
-                font-size: 1.45rem;
-                margin-bottom: 8px;
-            }
-
-            .card p {
-                color: #aab6ca;
-                margin-bottom: 20px;
-            }
-
-            form {
-                display: flex;
-                gap: 10px;
-            }
-
-            input {
-                flex: 1;
-                min-width: 0;
-                padding: 14px 15px;
-                border: 1px solid #3b4960;
-                border-radius: 10px;
-                background: #0b1020;
-                color: white;
+            .hero p {
                 font-size: 1rem;
-                outline: none;
             }
 
-            input:focus {
-                border-color: #60a5fa;
-                box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+            section {
+                padding: 45px 0;
             }
 
-            button {
-                border: none;
-                border-radius: 10px;
-                padding: 14px 18px;
-                background: linear-gradient(90deg, #3b82f6, #7c3aed);
-                color: white;
-                font-size: 0.95rem;
-                font-weight: 700;
-                cursor: pointer;
-                transition: transform 0.2s, opacity 0.2s;
+            .grid {
+                grid-template-columns: 1fr;
             }
 
-            button:hover {
-                transform: translateY(-2px);
-                opacity: 0.92;
+            .about-card, .project, .contact-card {
+                padding: 22px;
             }
+        }
+    </style>
+</head>
 
-            .greeting {
-                margin-top: 25px;
-                color: #e2e8f0;
-                overflow-wrap: anywhere;
-            }
+<body>
+    <div class="container">
+        <nav>
+            <a class="logo" href="#home">ACE<span>.</span></a>
 
-            .message {
-                color: #86efac;
-                font-size: 0.9rem;
-                margin-top: 8px;
-            }
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#projects">Projects</a>
+                <a href="#skills">Skills</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </nav>
+    </div>
 
-            .features {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 16px;
-                padding: 55px 0;
-            }
+    <main>
+        <header class="hero" id="home">
+            <div class="container">
+                <span class="tag">Aspiring Software Developer | AI Learner</span>
 
-            .feature {
-                background: rgba(17, 24, 39, 0.7);
-                border: 1px solid #273449;
-                border-radius: 16px;
-                padding: 22px 18px;
-            }
+                <h1>
+                    Hi, I'm Ace.<br>
+                    I build things with
+                    <span class="gradient">code.</span>
+                </h1>
 
-            .feature-icon {
-                font-size: 1.6rem;
-                margin-bottom: 12px;
-            }
+                <p>
+                    I'm on a journey into software development and artificial
+                    intelligence. I'm learning by building real projects,
+                    solving problems, and improving one step at a time.
+                </p>
 
-            .feature h3 {
-                font-size: 1rem;
-                margin-bottom: 7px;
-            }
-
-            .feature p {
-                color: #aab6ca;
-                font-size: 0.9rem;
-            }
-
-            footer {
-                border-top: 1px solid #273449;
-                text-align: center;
-                padding: 25px 0;
-                color: #94a3b8;
-                font-size: 0.85rem;
-            }
-
-            @media (max-width: 600px) {
-                .container {
-                    width: min(100% - 28px, 1000px);
-                }
-
-                nav {
-                    padding: 20px 0;
-                }
-
-                .brand {
-                    font-size: 1.3rem;
-                }
-
-                .hero {
-                    padding: 55px 0 35px;
-                }
-
-                h1 {
-                    letter-spacing: -1.5px;
-                }
-
-                .intro {
-                    font-size: 0.98rem;
-                }
-
-                .card {
-                    padding: 24px 18px;
-                }
-
-                form {
-                    flex-direction: column;
-                }
-
-                input, button {
-                    width: 100%;
-                    min-height: 48px;
-                }
-
-                .features {
-                    grid-template-columns: 1fr;
-                    padding: 35px 0;
-                }
-
-                .feature {
-                    padding: 20px;
-                }
-            }
-        </style>
-    </head>
-
-    <body>
-        <div class="background-glow"></div>
-
-        <div class="container">
-            <nav>
-                <div class="brand">ACE<span>.</span></div>
-                <div class="status">
-                    <span class="status-dot"></span>
-                    Building my future
+                <div class="buttons">
+                    <a class="btn btn-primary" href="#projects">
+                        Explore my projects →
+                    </a>
+                    <a class="btn" href="#contact">Get in touch</a>
                 </div>
-            </nav>
+            </div>
+        </header>
 
-            <main>
-                <section class="hero">
-                    <div class="eyebrow">
-                        MY JOURNEY INTO SOFTWARE &amp; AI
-                    </div>
+        <section id="about">
+            <div class="container">
+                <span class="section-label">A little about me</span>
+                <h2>Learning today. Building for tomorrow.</h2>
 
-                    <h1>
-                        Ideas become<br>
-                        <span class="gradient-text">reality here.</span>
-                    </h1>
-
-                    <p class="intro">
-                        Welcome to my personal website. I'm learning,
-                        building, and exploring what technology can do,
-                        one project at a time.
+                <div class="about-card">
+                    <p>
+                        I'm Ace, an aspiring developer interested in Python,
+                        web development, and AI. I started from the basics and
+                        am working toward creating useful applications that
+                        solve real-world problems. This portfolio is where
+                        I'll document my progress and share what I build.
                     </p>
-                </section>
+                </div>
+            </div>
+        </section>
 
-                <section class="card">
-                    <h2>Let's make it personal.</h2>
-                    <p>Enter your name and let my website welcome you.</p>
+        <section id="projects">
+            <div class="container">
+                <span class="section-label">What I'm building</span>
+                <h2>My projects</h2>
+                <p class="section-intro">
+                    Here are some projects from my learning journey.
+                    I'll add more as I build them.
+                </p>
 
-                    <form method="POST">
-                        <input
-                            type="text"
-                            name="name"
-                            placeholder="Enter your name"
-                            maxlength="50"
-                            required
-                            aria-label="Your name"
-                        >
-                        <button type="submit">Say hello &rarr;</button>
-                    </form>
-
-                    <h2 class="greeting">""" + greeting + """</h2>
-
-                    <p class="message">""" + safe_message + """</p>
-                </section>
-
-                <section class="features">
-                    <article class="feature">
-                        <div class="feature-icon">💻</div>
-                        <h3>Learning</h3>
-                        <p>Growing my Python and software development skills.</p>
+                <div class="grid">
+                    <article class="project">
+                        <div class="project-icon">🌐</div>
+                        <h3>Personal Portfolio Website</h3>
+                        <p>
+                            A responsive website built with Python and Flask
+                            and deployed online to share my work and progress.
+                        </p>
+                        <a class="project-link"
+                           href="https://ace-web-app.onrender.com"
+                           target="_blank" rel="noopener noreferrer">
+                            View live website ↗
+                        </a>
                     </article>
 
-                    <article class="feature">
-                        <div class="feature-icon">🚀</div>
-                        <h3>Building</h3>
-                        <p>Turning ideas into projects that work.</p>
+                    <article class="project">
+                        <div class="project-icon">🤖</div>
+                        <h3>Ace Chatbot</h3>
+                        <p>
+                            An early Python chatbot project that answers
+                            basic questions and introduces me to AI concepts.
+                        </p>
+                        <span class="project-link">More updates coming soon</span>
                     </article>
 
-                    <article class="feature">
-                        <div class="feature-icon">🤖</div>
-                        <h3>Exploring AI</h3>
-                        <p>Taking my first steps toward intelligent applications.</p>
+                    <article class="project">
+                        <div class="project-icon">🐍</div>
+                        <h3>Python Practice Projects</h3>
+                        <p>
+                            Small programs and experiments helping me
+                            strengthen my programming fundamentals.
+                        </p>
+                        <span class="project-link">More updates coming soon</span>
                     </article>
-                </section>
-            </main>
 
-            <footer>
-                Built with Python and Flask by Ace. &copy; 2026
-            </footer>
+                    <article class="project">
+                        <div class="project-icon">💡</div>
+                        <h3>Future AI Applications</h3>
+                        <p>
+                            I'm exploring ways to use software and AI
+                            to build practical tools that help people.
+                        </p>
+                        <span class="project-link">In progress</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="skills">
+            <div class="container">
+                <span class="section-label">My toolkit</span>
+                <h2>Skills I'm developing</h2>
+                <p class="section-intro">
+                    I'm still learning, and this list will grow as I gain
+                    more experience.
+                </p>
+
+                <div class="skills">
+                    <span class="skill">Python</span>
+                    <span class="skill">Flask</span>
+                    <span class="skill">HTML</span>
+                    <span class="skill">CSS</span>
+                    <span class="skill">Git</span>
+                    <span class="skill">GitHub</span>
+                    <span class="skill">AI Fundamentals</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+            <div class="container">
+                <div class="contact-card">
+                    <span class="section-label">Let's connect</span>
+                    <h2>Have an idea or opportunity?</h2>
+                    <p class="section-intro">
+                        I'm open to learning, collaborating, and connecting
+                        with people interested in technology.
+                    </p>
+                    <a class="btn btn-primary"
+                       href="mailto:YOUR_EMAIL@example.com">
+                        Email me →
+                    </a>
+                    <p style="color:#94a3b8; font-size:.85rem; margin-top:14px;">
+                        Replace the example email with your real email address.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            Built by Ace with Python and Flask · © 2026
         </div>
-    </body>
-    </html>
-    """
+    </footer>
+</body>
+</html>
+"""
+
+
+@app.route("/")
+def home():
+    return render_template_string(PAGE)
 
 
 if __name__ == "__main__":
