@@ -1,4 +1,5 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request
+import html
 
 app = Flask(__name__)
 
@@ -474,3 +475,102 @@ def home():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+@app.route("/chat", methods=["GET", "POST"])
+def chat():
+    message = ""
+    reply = ""
+
+    if request.method == "POST":
+        message = request.form.get("message", "").strip()[:500]
+        text = message.lower()
+
+        if any(word in text.split() for word in ["hello", "hi", "hey"]):
+            reply = "Hello! 👋 I'm Ace Chatbot. How can I help you?"
+        elif "your name" in text or "who are you" in text:
+            reply = "I'm Ace Chatbot, built by Ace while learning Python!"
+        elif "who made you" in text or "who created you" in text:
+            reply = "Ace created me while learning Python and web development."
+        elif "python" in text:
+            reply = "Python is a programming language used for websites, automation, data, and AI."
+        elif "joke" in text:
+            reply = "Why do programmers prefer dark mode? Because light attracts bugs! 😂"
+        elif "help" in text or "what can you do" in text:
+            reply = "I can answer simple questions about my name, my creator, Python, and jokes."
+        elif "bye" in text or "goodbye" in text:
+            reply = "Goodbye! 👋 Thanks for chatting with me."
+        elif message:
+            reply = "I'm still learning! Try asking about Python, my name, my creator, or ask for a joke."
+
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Ace Chatbot</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: #0b1020;
+                color: white;
+                text-align: center;
+                padding: 30px 15px;
+            }
+            .box {
+                max-width: 500px;
+                margin: 20px auto;
+                padding: 25px;
+                background: #172033;
+                border-radius: 16px;
+            }
+            input {
+                box-sizing: border-box;
+                width: 100%;
+                padding: 13px;
+                border-radius: 8px;
+                border: none;
+                margin: 10px 0;
+            }
+            button {
+                padding: 12px 25px;
+                background: #60a5fa;
+                color: #0b1020;
+                border: none;
+                border-radius: 8px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .reply {
+                background: #263449;
+                padding: 15px;
+                border-radius: 10px;
+                margin-top: 20px;
+                overflow-wrap: anywhere;
+            }
+            a { color: #60a5fa; }
+        </style>
+    </head>
+    <body>
+        <div class="box">
+            <h1>🤖 Ace Chatbot</h1>
+            <p>Welcome! Send me a message.</p>
+
+            <form method="POST">
+                <input name="message"
+                       placeholder="Type your message here..."
+                       maxlength="500" required>
+                <button type="submit">Send</button>
+            </form>
+
+            {% if reply %}
+            <div class="reply">
+                <p><strong>You:</strong> {{ message }}</p>
+                <p><strong>Ace:</strong> {{ reply }}</p>
+            </div>
+            {% endif %}
+
+            <p><a href="/">← Back to my portfolio</a></p>
+        </div>
+    </body>
+    </html>
+    """, message=message, reply=reply)
